@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<script>
+    function loadHTML(rule_id) {
+        // load HTML code of iframe (crawling result)
+        var iframe = document.getElementById("result_" + rule_id);
+        var printBox = document.getElementById("printBox_" + rule_id);
+        printBox.value = iframe.contentWindow.document.body.innerHTML;
+    }
+
+    function loadIframe(rule_id, src) {
+        // load crawling result URL in iframe
+        var iframe = document.getElementById("result_" + rule_id);
+        iframe.src = src;
+    }
+/*
+        function addAttr(filter_id) {
+            // add an attribute on the filter
+            var filt = document.getElementById("filter_" + filter_id);
+    
+            var attr = document.createElement("li");
+            attr.className = "list-group-item";
+            filt.appendChild(attr);
+    
+            var input_group = document.createElement("div");
+            input_group.className = "input-group";
+            attr.appendChild(input_group);
+    
+            var attr_name = document.createElement("input");
+            var attr_val = document.createElement("input");
+            attr_name.type = attr_val.type = "text";
+            attr_name.className = attr_val.className = "form-control";
+            attr_name.placeholder = "attribute name";
+            attr_val.placeholder = "attribute value";
+            input_group.appendChild(attr_name);
+            input_group.appendChild(attr_val);
+        }
+    
+        function removeAttr(filter_id) {
+            // remove the last attribute on the filter
+            var filt = document.getElementById("filter_" + filter_id);
+            var li_tags = filt.getElementsByTagName("li");
+    
+            if (li_tags.length <= 1) {
+                alert("There is no attribute.");
+                return;
+            }
+    
+            var last_li = li_tags[li_tags.length - 1];
+    
+            filt.removeChild(last_li);
+        }
+    
+        function addFilter(rule_id) {
+        }
+    */
+</script>
+
+<form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="rules_post_req" id="add_rule" value="add_rule">
+    <button type="submit" class="btn btn-primary">Add Rule</button>
+</form>
+
+<hr>
+
+{% for rule in rules %}
+
+{% if url_save_successful == rule.id %}
+<div class="alert alert-success" role="alert">
+    URL changed successfully.
+</div>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="rules_post_req" id="set_url_{{ rule.id }}" value="set_url">
+    <input type="hidden" name="rule_id" id="url_rule_id_{{ rule.id }}" value="{{ rule.id }}">
+    <!-- Input URL -->
+    <div class="form-group">
+        <label for="InputURL">Site URL To Crawl</label>
+        <input type="text" class="form-control" id="InputURL_{{ rule.id }}" name="rule_url" placeholder="Input URL"
+            value="{{ rule.url }}">
+    </div>
+    <div class="btn-group" role="group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-danger">Remove This Rule</button>
+    </div>
+</form>
+
+<hr>
+<h5>Filters</h5>
+
+<!-- Filter Buttons -->
+<button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#AddFilterModal{{ rule.id }}">Add
+    Filter</button>
+
+<!-- Modal -->
+<form method="POST">
+    {% csrf_token %}
+    <div class="modal fade" id="AddFilterModal{{ rule.id }}" tabindex="-1" role="dialog"
+        aria-labelledby="AddFilterModalLabel{{ rule.id }}" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="AddFilterModalLabel{{ rule.id }}">Add a new Filter</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" name="rules_post_req" id="add_filter_{{ rule.id }}" value="add_filter">
+                    <input type="hidden" name="rule_id" id="add_filt_rule_id_{{ rule.id }}" value="{{ rule.id }}">
+                    <div class="form-group">
+                        <label for="addFilterInputTagName_{{ rule.id }}">Tag Name</label>
+                        <input type="text" class="form-control" id="addFilterInputTagName_{{ rule.id }}"
+                            name="addFilterTagName">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Filters List -->
+{% for filt in rule.filter_set.all %}
+<br>
+<div class="list-group list-group-horizontal d-inline-flex p-2" id="filter_{{ filt.id }}">
+    <!-- tag name -->
+    <a href="{% url 'filter_settings' filt.id %}" class="list-group-item list-group-item-action">
+        {{ filt.tag_name }}
+    </a>
+
+    <!-- attributes -->
+    {% for att in filt.attribute_set.all %}
+    <a href="{% url 'attr_settings' att.id %}" class="list-group-item list-group-item-action">
+        {{ att.name }}="{{ att.value }}"
+    </a>
+    {% endfor %}
+</div>
+{% endfor %}
+
+<hr>
+
+<!-- Result -->
+<h5>Result</h5>
+<!-- Show Buttons -->
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-light"
+        onclick="loadIframe('{{ rule.id }}', '{% url 'test_view' rule.id %}')">Show Result</button>
+    <button type="button" class="btn btn-light" onclick="loadHTML('{{ rule.id }}')">Show HTML Code</button>
+</div>
+<!-- Result Show Views -->
+<iframe id="result_{{ rule.id }}" width="100%" height="200">Sorry, iframe
+    does not
+    support.</iframe>
+<textarea class="form-control" id="printBox_{{ rule.id }}" rows="7" disabled></textarea>
+
+<hr>
+
+{% endfor %}
+
+{% endblock content %}

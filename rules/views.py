@@ -2,34 +2,127 @@
 2020. 2.
 '''
 import urllib.request
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
+from django.views.decorators.clickjacking import xframe_options_exempt
 
 from bs4 import BeautifulSoup
 
 from rules.models import Rule, Filter, Attribute
+from rules.forms import FilterForm, AttributeForm
 
 
-def test(response):
-    '''
-    test function
-    '''
-    my_rule = Rule.objects.get(id=1)
+def main(request):
+    ''' main page rendering function '''
 
+    url_save_successful = 0  # this value is rule's id
+
+    if request.method == 'POST':
+        if request.POST['rules_post_req'] == 'set_url':
+            # URL related POST Request
+            rule_id = int(request.POST['rule_id'])
+            rule = get_object_or_404(Rule, id=rule_id)
+            rule.url = request.POST['rule_url']
+            rule.save()
+            url_save_successful = rule_id
+
+        elif request.POST['rules_post_req'] == 'add_rule':
+            # Add new rule related POST Request
+            Rule.objects.create()
+
+        elif request.POST['rules_post_req'] == 'add_filter':
+            # Add new filter related POST Request
+            rule_id = int(request.POST['rule_id'])
+            Filter.objects.create(
+                origin_rule=Rule.objects.get(id=rule_id),
+                tag_name=request.POST['addFilterTagName'],
+                find_all=False
+            )
+
+    context = {
+        'rules': Rule.objects.all(),
+        'url_save_successful': url_save_successful
+    }
+
+    return render(request, 'sites/rules.html', context)
+
+
+@xframe_options_exempt
+def test_view(request, rule_id):
+    ''' test view function '''
+    return HttpResponse(content=crawling(rule_id))
+
+
+def filter_settings(request, filter_id):
+    ''' filter settings page rendering function '''
+
+    filt = get_object_or_404(Filter, id=filter_id)
+    filtform = FilterForm(request.POST or None, instance=filt)
+
+    if request.method == 'POST' and filtform.is_valid():
+        filtform.save()
+        return redirect('main')
+
+    context = {
+        'filter': filt,
+        'form': filtform
+    }
+
+    return render(request, 'sites/filter_settings.html', context)
+
+
+def attr_creation(request, filter_id):
+    ''' attribute creation in the filter '''
+
+    if request.method == 'POST':
+        name = request.POST['createAttrName']
+        value = request.POST['createAttrValue']
+        origin_filt = Filter.objects.get(id=filter_id)
+        Attribute.objects.create(
+            name=name, value=value, origin_filter=origin_filt)
+
+    return redirect('filter_settings', filter_id=filter_id)
+
+
+def attr_settings(request, attr_id):
+    ''' attribute settings page rendering function '''
+
+    attr = get_object_or_404(Attribute, id=attr_id)
+    attrform = AttributeForm(request.POST or None, instance=attr)
+
+    if request.method == 'POST' and attrform.is_valid():
+        attrform.save()
+        return redirect('main')
+
+    context = {
+        'attribute': attr,
+        'form': attrform
+    }
+
+    return render(request, 'sites/attr_settings.html', context)
+
+
+def crawling(id_idx):
+    ''' Crawling method with django models '''
+    # get first rule
+    my_rule = Rule.objects.get(id=id_idx)
+
+    # init bs4 -> data (soup)
     external_http = urllib.request.urlopen(my_rule.url)
     whole_html = external_http.read()
     data = BeautifulSoup(whole_html, 'html.parser')
 
+    # finding process with filters
     my_filters = Filter.objects.filter(origin_rule=my_rule)
-    for ft in my_filters:
-        my_attributes = Attribute.objects.filter(origin_filter=ft)
+    for filt in my_filters:
+        my_attributes = Attribute.objects.filter(origin_filter=filt)
         att_dict = {}
         for att in my_attributes:
             att_dict[att.name] = att.value
 
-        if ft.find_all:
-            data = data.find_all(ft.tag_name, att_dict)
+        if filt.find_all:
+            data = data.find_all(filt.tag_name, att_dict)
         else:
-            data = data.find(ft.tag_name, att_dict)
+            data = data.find(filt.tag_name, att_dict)
 
-    return HttpResponse(content=data)
+    return str(data)

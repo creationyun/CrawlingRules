@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h3>Attribute Settings</h3>
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="btn-group" role="group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-danger">Delete</button>
+    </div>
+</form>
+
+{% endblock content %}
