@@ -18,7 +18,7 @@ def main(request):
     url_save_successful = 0  # this value is rule's id
 
     if request.method == 'POST':
-        if request.POST['rules_post_req'] == 'set_url':
+        if request.POST['rules_submit'] == 'set_url':
             # URL related POST Request
             rule_id = int(request.POST['rule_id'])
             rule = get_object_or_404(Rule, id=rule_id)
@@ -26,11 +26,12 @@ def main(request):
             rule.save()
             url_save_successful = rule_id
 
-        elif request.POST['rules_post_req'] == 'add_rule':
+        if request.POST['rules_submit'] == 'add_rule':
             # Add new rule related POST Request
             Rule.objects.create()
+            return redirect('main')
 
-        elif request.POST['rules_post_req'] == 'add_filter':
+        if request.POST['rules_submit'] == 'add_filter':
             # Add new filter related POST Request
             rule_id = int(request.POST['rule_id'])
             Filter.objects.create(
@@ -38,6 +39,20 @@ def main(request):
                 tag_name=request.POST['addFilterTagName'],
                 find_all=False
             )
+            return redirect('main')
+
+        if request.POST['rules_submit'] == 'remove_rule':
+            # Remove the rule related POST Request
+            rule_id = int(request.POST['rule_id'])
+            rule = get_object_or_404(Rule, id=rule_id)
+            filts_in_rule = Filter.objects.filter(origin_rule=rule)
+            for filt in filts_in_rule:
+                attrs_in_filter = Attribute.objects.filter(origin_filter=filt)
+                for att in attrs_in_filter:
+                    att.delete()
+                filt.delete()
+            rule.delete()
+            return redirect('main')
 
     context = {
         'rules': Rule.objects.all(),
@@ -59,9 +74,25 @@ def filter_settings(request, filter_id):
     filt = get_object_or_404(Filter, id=filter_id)
     filtform = FilterForm(request.POST or None, instance=filt)
 
-    if request.method == 'POST' and filtform.is_valid():
-        filtform.save()
-        return redirect('main')
+    if request.method == 'POST':
+        if request.POST['filter_submit'] == 'save_filter' and filtform.is_valid():
+            filtform.save()
+            return redirect('main')
+
+        if request.POST['filter_submit'] == 'add_attribute':
+            name = request.POST['createAttrName']
+            value = request.POST['createAttrValue']
+            origin_filt = Filter.objects.get(id=filter_id)
+            Attribute.objects.create(
+                name=name, value=value, origin_filter=origin_filt)
+            return redirect('filter_settings', filter_id=filter_id)
+
+        if request.POST['filter_submit'] == 'delete_filter':
+            attrs_in_filter = Attribute.objects.filter(origin_filter=filt)
+            for att in attrs_in_filter:
+                att.delete()
+            filt.delete()
+            return redirect('main')
 
     context = {
         'filter': filt,
@@ -71,28 +102,20 @@ def filter_settings(request, filter_id):
     return render(request, 'sites/filter_settings.html', context)
 
 
-def attr_creation(request, filter_id):
-    ''' attribute creation in the filter '''
-
-    if request.method == 'POST':
-        name = request.POST['createAttrName']
-        value = request.POST['createAttrValue']
-        origin_filt = Filter.objects.get(id=filter_id)
-        Attribute.objects.create(
-            name=name, value=value, origin_filter=origin_filt)
-
-    return redirect('filter_settings', filter_id=filter_id)
-
-
 def attr_settings(request, attr_id):
     ''' attribute settings page rendering function '''
 
     attr = get_object_or_404(Attribute, id=attr_id)
     attrform = AttributeForm(request.POST or None, instance=attr)
 
-    if request.method == 'POST' and attrform.is_valid():
-        attrform.save()
-        return redirect('main')
+    if request.method == 'POST':
+        if request.POST['attr_submit'] == 'save_attribute' and attrform.is_valid():
+            attrform.save()
+            return redirect('main')
+
+        if request.POST['attr_submit'] == 'delete_attribute':
+            attr.delete()
+            return redirect('main')
 
     context = {
         'attribute': attr,
