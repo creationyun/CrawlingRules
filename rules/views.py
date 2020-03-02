@@ -18,6 +18,7 @@ def main(request):
     rule_page = 1  # this value is first shown rule page
 
     if request.method == 'GET' and 'rule_page' in request.GET:
+        # Load GET parameters (/?rule_page=??)
         rule_page = int(request.GET['rule_page'])
 
     if request.method == 'POST':
@@ -81,10 +82,12 @@ def filter_settings(request, filter_id):
 
     if request.method == 'POST':
         if request.POST['filter_submit'] == 'save_filter' and filtform.is_valid():
+            # Save filter settings related POST request
             filtform.save()
             return redirect('main')
 
         if request.POST['filter_submit'] == 'add_attribute':
+            # Create new filter's attribute related POST request
             name = request.POST['createAttrName']
             value = request.POST['createAttrValue']
             origin_filt = Filter.objects.get(id=filter_id)
@@ -93,6 +96,7 @@ def filter_settings(request, filter_id):
             return redirect('filter_settings', filter_id=filter_id)
 
         if request.POST['filter_submit'] == 'delete_filter':
+            # Delete filter related POST request
             attrs_in_filter = Attribute.objects.filter(origin_filter=filt)
             for att in attrs_in_filter:
                 att.delete()
@@ -115,10 +119,12 @@ def attr_settings(request, attr_id):
 
     if request.method == 'POST':
         if request.POST['attr_submit'] == 'save_attribute' and attrform.is_valid():
+            # Save attribute settings related POST request
             attrform.save()
             return redirect('main')
 
         if request.POST['attr_submit'] == 'delete_attribute':
+            # Delete attribute related POST request
             attr.delete()
             return redirect('main')
 

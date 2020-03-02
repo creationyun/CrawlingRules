@@ -1,0 +1,120 @@
+{% if url_save_successful == rule.id %}
+<div class="alert alert-success" role="alert">
+    URL changed successfully.
+</div>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="rule_id" id="rule_id_{{ rule.id }}" value="{{ rule.id }}">
+    <!-- Input URL -->
+    <div class="form-group">
+        <label for="InputURL">Site URL To Crawl</label>
+        <input type="text" class="form-control" id="InputURL_{{ rule.id }}" name="rule_url" placeholder="Input URL"
+            value="{{ rule.url }}">
+    </div>
+    <div class="btn-group" role="group">
+        <button type="submit" class="btn btn-primary" name="rules_submit" id="set_url_{{ rule.id }}"
+            value="set_url">Save</button>
+        <button type="button" class="btn btn-danger" data-toggle="modal"
+            data-target="#RemoveRuleModal{{ rule.id }}">Remove This Rule</button>
+    </div>
+
+    <!-- Modal of deletion -->
+    <div class="modal fade" id="RemoveRuleModal{{ rule.id }}" tabindex="-1" role="dialog"
+        aria-labelledby="RemoveRuleModalLabel{{ rule.id }}" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="RemoveRuleModalLabel{{ rule.id }}">Remove Rule</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this rule?</p>
+                    <p>(All of filters and attributes will be removed.)</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger" name="rules_submit" id="remove_rule_{{ rule.id }}"
+                        value="remove_rule">Yes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<hr>
+<h5>Filters</h5>
+
+<!-- Filter Buttons -->
+<button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#AddFilterModal{{ rule.id }}">Add
+    Filter</button>
+
+<!-- Modal of filter addition -->
+<form method="POST">
+    {% csrf_token %}
+    <div class="modal fade" id="AddFilterModal{{ rule.id }}" tabindex="-1" role="dialog"
+        aria-labelledby="AddFilterModalLabel{{ rule.id }}" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="AddFilterModalLabel{{ rule.id }}">Add a new Filter</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" name="rule_id" id="add_filt_rule_id_{{ rule.id }}" value="{{ rule.id }}">
+                    <div class="form-group">
+                        <label for="addFilterInputTagName_{{ rule.id }}">Tag Name</label>
+                        <input type="text" class="form-control" id="addFilterInputTagName_{{ rule.id }}"
+                            name="addFilterTagName">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" name="rules_submit" id="add_filter_{{ rule.id }}"
+                        value="add_filter">Add</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Filters List -->
+{% for filt in rule.filter_set.all %}
+<br>
+<div class="list-group list-group-horizontal d-inline-flex p-2" id="filter_{{ filt.id }}">
+    <!-- tag name -->
+    <a href="{% url 'filter_settings' filt.id %}"
+        class="list-group-item list-group-item-action list-group-item-{% if filt.find_all %}primary{% else %}secondary{% endif %}">
+        {{ filt.tag_name }}
+    </a>
+
+    <!-- attributes -->
+    {% for att in filt.attribute_set.all %}
+    <a href="{% url 'attr_settings' att.id %}" class="list-group-item list-group-item-action">
+        {{ att.name }}="{{ att.value }}"
+    </a>
+    {% endfor %}
+</div>
+{% endfor %}
+
+<hr>
+
+<!-- Result -->
+<h5>Result</h5>
+<!-- Show Buttons -->
+<div class="btn-group" role="group">
+    <button type="button" class="btn btn-light"
+        onclick="loadIframe('{{ rule.id }}', '{% url 'test_view' rule.id %}')">Show Result</button>
+    <button type="button" class="btn btn-light" onclick="loadHTML('{{ rule.id }}')">Show HTML Code</button>
+</div>
+<!-- Result Show Views -->
+<iframe id="result_{{ rule.id }}" width="100%" height="200">Sorry, iframe
+    does not
+    support.</iframe>
+<textarea class="form-control" id="printBox_{{ rule.id }}" rows="7" disabled></textarea>
