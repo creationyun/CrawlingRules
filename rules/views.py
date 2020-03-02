@@ -1,10 +1,9 @@
-'''
-2020. 2.
-'''
+''' views.py: Page view methods and some tool functions '''
 import urllib.request
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.urls import reverse
 
 from bs4 import BeautifulSoup
 
@@ -16,6 +15,10 @@ def main(request):
     ''' main page rendering function '''
 
     url_save_successful = 0  # this value is rule's id
+    rule_page = 1  # this value is first shown rule page
+
+    if request.method == 'GET' and 'rule_page' in request.GET:
+        rule_page = int(request.GET['rule_page'])
 
     if request.method == 'POST':
         if request.POST['rules_submit'] == 'set_url':
@@ -25,11 +28,12 @@ def main(request):
             rule.url = request.POST['rule_url']
             rule.save()
             url_save_successful = rule_id
+            rule_page = rule_id
 
         if request.POST['rules_submit'] == 'add_rule':
             # Add new rule related POST Request
-            Rule.objects.create()
-            return redirect('main')
+            new_rule = Rule.objects.create()
+            return HttpResponseRedirect(reverse('main') + '?rule_page=%s' % new_rule.id)
 
         if request.POST['rules_submit'] == 'add_filter':
             # Add new filter related POST Request
@@ -39,7 +43,7 @@ def main(request):
                 tag_name=request.POST['addFilterTagName'],
                 find_all=False
             )
-            return redirect('main')
+            return HttpResponseRedirect(reverse('main') + '?rule_page=%s' % rule_id)
 
         if request.POST['rules_submit'] == 'remove_rule':
             # Remove the rule related POST Request
@@ -56,7 +60,8 @@ def main(request):
 
     context = {
         'rules': Rule.objects.all(),
-        'url_save_successful': url_save_successful
+        'url_save_successful': url_save_successful,
+        'rule_page': rule_page
     }
 
     return render(request, 'sites/rules.html', context)

@@ -15,47 +15,6 @@
         var iframe = document.getElementById("result_" + rule_id);
         iframe.src = src;
     }
-/*
-        function addAttr(filter_id) {
-            // add an attribute on the filter
-            var filt = document.getElementById("filter_" + filter_id);
-    
-            var attr = document.createElement("li");
-            attr.className = "list-group-item";
-            filt.appendChild(attr);
-    
-            var input_group = document.createElement("div");
-            input_group.className = "input-group";
-            attr.appendChild(input_group);
-    
-            var attr_name = document.createElement("input");
-            var attr_val = document.createElement("input");
-            attr_name.type = attr_val.type = "text";
-            attr_name.className = attr_val.className = "form-control";
-            attr_name.placeholder = "attribute name";
-            attr_val.placeholder = "attribute value";
-            input_group.appendChild(attr_name);
-            input_group.appendChild(attr_val);
-        }
-    
-        function removeAttr(filter_id) {
-            // remove the last attribute on the filter
-            var filt = document.getElementById("filter_" + filter_id);
-            var li_tags = filt.getElementsByTagName("li");
-    
-            if (li_tags.length <= 1) {
-                alert("There is no attribute.");
-                return;
-            }
-    
-            var last_li = li_tags[li_tags.length - 1];
-    
-            filt.removeChild(last_li);
-        }
-    
-        function addFilter(rule_id) {
-        }
-    */
 </script>
 
 <form method="POST">
@@ -69,7 +28,7 @@
     <div class="col-3">
         <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
             {% for rule in rules %}
-            <a class="nav-link{% if rule.id == 1 %} active{% endif %}" id="v-pills-rule{{ rule.id }}-tab" data-toggle="pill" href="#v-pills-rule{{ rule.id }}" role="tab" aria-controls="v-pills-rule{{ rule.id }}" aria-selected="{% if rule.id == 1 %}true{% else %}false{% endif %}">
+            <a class="nav-link{% if rule.id == rule_page %} active{% endif %}" id="v-pills-rule{{ rule.id }}-tab" data-toggle="pill" href="#v-pills-rule{{ rule.id }}" role="tab" aria-controls="v-pills-rule{{ rule.id }}" aria-selected="{% if rule.id == rule_page %}true{% else %}false{% endif %}">
                 Rule {{ rule.id }}
             </a>
             {% endfor %}
@@ -78,7 +37,7 @@
     <div class="col-9">
         <div class="tab-content" id="v-pills-tabContent">
             {% for rule in rules %}
-            <div class="tab-pane fade{% if rule.id == 1 %} show active{% endif %}" id="v-pills-rule{{ rule.id }}" role="tabpanel" aria-labelledby="v-pills-rule{{ rule.id }}-tab">
+            <div class="tab-pane fade{% if rule.id == rule_page %} show active{% endif %}" id="v-pills-rule{{ rule.id }}" role="tabpanel" aria-labelledby="v-pills-rule{{ rule.id }}-tab">
                 {% if url_save_successful == rule.id %}
                 <div class="alert alert-success" role="alert">
                     URL changed successfully.
@@ -94,9 +53,9 @@
                         <input type="text" class="form-control" id="InputURL_{{ rule.id }}" name="rule_url" placeholder="Input URL"
                             value="{{ rule.url }}">
                     </div>
-                    <div class="btn-group" role="group" data-toggle="modal" data-target="#RemoveRuleModal{{ rule.id }}">
+                    <div class="btn-group" role="group">
                         <button type="submit" class="btn btn-primary" name="rules_submit" id="set_url_{{ rule.id }}" value="set_url">Save</button>
-                        <button type="button" class="btn btn-danger">Remove This Rule</button>
+                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#RemoveRuleModal{{ rule.id }}">Remove This Rule</button>
                     </div>
 
                     <!-- Modal of deletion -->
@@ -165,7 +124,7 @@
                 <br>
                 <div class="list-group list-group-horizontal d-inline-flex p-2" id="filter_{{ filt.id }}">
                     <!-- tag name -->
-                    <a href="{% url 'filter_settings' filt.id %}" class="list-group-item list-group-item-action">
+                    <a href="{% url 'filter_settings' filt.id %}" class="list-group-item list-group-item-action list-group-item-{% if filt.find_all %}primary{% else %}secondary{% endif %}">
                         {{ filt.tag_name }}
                     </a>
 

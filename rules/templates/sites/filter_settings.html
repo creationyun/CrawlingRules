@@ -2,6 +2,10 @@
 
 {% block content %}
 
+<button type="button" class="btn btn-secondary" id="back" onclick="location.href='{% url 'main' %}?rule_page={{ filter.origin_rule.id }}'">Back to main</button>
+
+<hr>
+
 <!-- filter settings -->
 <h3>Filter Settings</h3>
 <form method="POST">
