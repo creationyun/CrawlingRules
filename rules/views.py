@@ -15,7 +15,8 @@ def main(request):
     ''' main page rendering function '''
 
     url_save_successful = 0  # this value is rule's id
-    rule_page = 1  # this value is first shown rule page
+    # this value is first shown rule page
+    rule_page = Rule.objects.order_by('id').first().id
 
     if request.method == 'GET' and 'rule_page' in request.GET:
         # Load GET parameters (/?rule_page=??)
@@ -83,8 +84,9 @@ def filter_settings(request, filter_id):
     if request.method == 'POST':
         if request.POST['filter_submit'] == 'save_filter' and filtform.is_valid():
             # Save filter settings related POST request
+            rule_id = filt.origin_rule.id
             filtform.save()
-            return redirect('main')
+            return HttpResponseRedirect(reverse('main') + '?rule_page=%s' % rule_id)
 
         if request.POST['filter_submit'] == 'add_attribute':
             # Create new filter's attribute related POST request
@@ -100,8 +102,9 @@ def filter_settings(request, filter_id):
             attrs_in_filter = Attribute.objects.filter(origin_filter=filt)
             for att in attrs_in_filter:
                 att.delete()
+            rule_id = filt.origin_rule.id
             filt.delete()
-            return redirect('main')
+            return HttpResponseRedirect(reverse('main') + '?rule_page=%s' % rule_id)
 
     context = {
         'filter': filt,
@@ -120,13 +123,15 @@ def attr_settings(request, attr_id):
     if request.method == 'POST':
         if request.POST['attr_submit'] == 'save_attribute' and attrform.is_valid():
             # Save attribute settings related POST request
+            rule_id = attr.origin_filter.origin_rule.id
             attrform.save()
-            return redirect('main')
+            return HttpResponseRedirect(reverse('main') + '?rule_page=%s' % rule_id)
 
         if request.POST['attr_submit'] == 'delete_attribute':
             # Delete attribute related POST request
+            rule_id = attr.origin_filter.origin_rule.id
             attr.delete()
-            return redirect('main')
+            return HttpResponseRedirect(reverse('main') + '?rule_page=%s' % rule_id)
 
     context = {
         'attribute': attr,
