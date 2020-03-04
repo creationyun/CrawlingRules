@@ -12,19 +12,20 @@ This program is written in Python 3.x, so you need to install it.
 $ source ~/venv/bin/activate
 ```
 
-2. Install django, bs4 (beautifulsoup)
+2. Install django, bs4 (beautifulsoup) packages
 
 ```shell
 (venv) $ pip install django, bs4
 ```
 
-3. Create secrets.json file
+3. Create secrets.json file in the main directory
 
 ```shell
+(venv) $ cd /path/to/CrawlingRules
 (venv) $ echo "{\"SECRET_KEY\": \"...\"}" > secrets.json
 ```
 
-You must put your secret key on `\"...\"` (string).
+You must put your secret key on `"..."` (string).
 
 How to get your own secret key: https://miniwebtool.com/django-secret-key-generator/
 
