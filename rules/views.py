@@ -16,7 +16,10 @@ def main(request):
 
     url_save_successful = 0  # this value is rule's id
     # this value is first shown rule page
-    rule_page = Rule.objects.order_by('id').first().id
+    if Rule.objects.exists():
+        rule_page = Rule.objects.order_by('id').first().id
+    else:
+        rule_page = None
 
     if request.method == 'GET' and 'rule_page' in request.GET:
         # Load GET parameters (/?rule_page=??)
